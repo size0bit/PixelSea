@@ -3,24 +3,65 @@ package com.example.pixelsea
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.pixelsea.ui.theme.PixelSeaTheme // 这是 AS 默认生成的主题，保留它
-import com.pixelsea.feature.gallery.ui.GalleryScreen // 导入我们刚刚写的时光轴 UI
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.pixelsea.ui.theme.PixelSeaTheme
+import com.pixelsea.feature.gallery.ui.GalleryScreen
+import com.pixelsea.feature.viewer.ui.ViewerScreen // 导入 Viewer
+
 import dagger.hilt.android.AndroidEntryPoint
 
-/**
- * 应用的主入口 Activity
- * 使用 Hilt 进行依赖注入，管理整个应用的生命周期
- */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 设置 Compose 作为 UI 渲染引擎，替代传统的 XML 布局
         setContent {
-            // 使用默认的 Material 3 主题包裹我们的 UI
             PixelSeaTheme {
-                // 正式挂载相册时光轴页面！
-                GalleryScreen()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // 1. 创建导航控制器（遥控器）
+                    val navController = rememberNavController()
+
+                    // 2. 搭建路由地图，设置起始页为 "gallery"
+                    NavHost(navController = navController, startDestination = "gallery") {
+
+                        // 目的地 A：相册网格页
+                        composable("gallery") {
+                            GalleryScreen(
+                                onPhotoClick = { clickedIndex ->
+                                    // 发生点击时，带着 index 跳转到 viewer
+                                    navController.navigate("viewer/$clickedIndex")
+                                }
+                            )
+                        }
+
+                        // 目的地 B：大图预览页（声明需要接收一个叫 index 的 Int 类型参数）
+                        composable(
+                            route = "viewer/{index}",
+                            arguments = listOf(navArgument("index") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            // 从路由中提取出传过来的 index
+                            val index = backStackEntry.arguments?.getInt("index") ?: 0
+
+                            ViewerScreen(
+                                initialIndex = index,
+                                onBackClick = {
+                                    // 点击返回时，弹出当前页面，回到上一页
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

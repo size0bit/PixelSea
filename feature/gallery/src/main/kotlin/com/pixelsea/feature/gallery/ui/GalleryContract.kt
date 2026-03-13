@@ -7,13 +7,9 @@ import com.pixelsea.core.ui.architecture.ViewState
 
 /**
  * 相册页面的状态数据
- * @param isLoading 是否正在加载照片
- * @param photos 照片列表数据
  * @param permissionGranted 存储权限是否已授予
  */
 data class GalleryViewState(
-    val isLoading: Boolean = true,
-    val photos: List<Photo> = emptyList(),
     val permissionGranted: Boolean = false
 ) : ViewState
 
