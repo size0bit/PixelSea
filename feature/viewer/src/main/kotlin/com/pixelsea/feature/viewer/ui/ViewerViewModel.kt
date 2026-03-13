@@ -1,7 +1,6 @@
 package com.pixelsea.feature.viewer.ui
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import com.pixelsea.core.data.model.Photo
 import com.pixelsea.core.data.repository.PhotoRepository
