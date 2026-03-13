@@ -6,6 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pixelsea.ui.theme.PixelSeaTheme
 import com.pixelsea.feature.gallery.ui.GalleryScreen
-import com.pixelsea.feature.viewer.ui.ViewerScreen // 导入 Viewer
+import com.pixelsea.feature.viewer.ui.ViewerScreen
 
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -28,35 +32,34 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // 1. 创建导航控制器（遥控器）
                     val navController = rememberNavController()
+                    
+                    // 使用计数器强制每次返回时刷新 Gallery
+                    var galleryRefreshKey by remember { mutableStateOf(0L) }
 
-                    // 2. 搭建路由地图，设置起始页为 "gallery"
                     NavHost(navController = navController, startDestination = "gallery") {
 
-                        // 目的地 A：相册网格页
                         composable("gallery") {
                             GalleryScreen(
-                                onPhotoClick = { clickedIndex ->
-                                    // 发生点击时，带着 index 跳转到 viewer
-                                    navController.navigate("viewer/$clickedIndex")
+                                refreshKey = galleryRefreshKey,
+                                onPhotoClick = { photoId ->
+                                    navController.navigate("viewer/$photoId")
                                 }
                             )
                         }
 
-                        // 目的地 B：大图预览页（声明需要接收一个叫 index 的 Int 类型参数）
                         composable(
-                            route = "viewer/{index}",
-                            arguments = listOf(navArgument("index") { type = NavType.IntType })
+                            route = "viewer/{photoId}",
+                            arguments = listOf(navArgument("photoId") { type = NavType.LongType })
                         ) { backStackEntry ->
-                            // 从路由中提取出传过来的 index
-                            val index = backStackEntry.arguments?.getInt("index") ?: 0
+                            val photoId = backStackEntry.arguments?.getLong("photoId") ?: 0L
 
                             ViewerScreen(
-                                initialIndex = index,
+                                initialPhotoId = photoId,
                                 onBackClick = {
-                                    // 点击返回时，弹出当前页面，回到上一页
                                     navController.popBackStack()
+                                    // 返回时更新 key，强制 GalleryScreen 刷新
+                                    galleryRefreshKey = System.currentTimeMillis()
                                 }
                             )
                         }

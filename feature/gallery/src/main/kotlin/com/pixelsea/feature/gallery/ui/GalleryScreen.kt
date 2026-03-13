@@ -19,17 +19,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GalleryScreen(
     viewModel: GalleryViewModel = hiltViewModel(),
-    onPhotoClick: (Int) -> Unit // 👇 新增：当照片被点击时触发，传出 index
+    onPhotoClick: (Long) -> Unit,
+    refreshKey: Any? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lazyPagingItems = viewModel.pagedPhotos.collectAsLazyPagingItems()
+
+    LaunchedEffect(refreshKey) {
+        lazyPagingItems.refresh()
+    }
 
     val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         android.Manifest.permission.READ_MEDIA_IMAGES
@@ -75,27 +79,23 @@ fun GalleryScreen(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
+                    val items = lazyPagingItems.itemSnapshotList.items
                     items(
-                        count = lazyPagingItems.itemCount,
-                        // 1. 为不同类型的 Item 提供独一无二的 Key
-                        key = lazyPagingItems.itemKey { item ->
-                            when (item) {
-                                is GalleryItem.PhotoItem -> "photo_${item.photo.id}"
+                        count = items.size,
+                        key = { index ->
+                            when (val item = items[index]) {
                                 is GalleryItem.HeaderItem -> "header_${item.date}"
+                                is GalleryItem.PhotoItem -> "photo_${item.photo.id}"
                             }
                         },
-                        // 2. 动态计算 Span（跨度）
                         span = { index ->
-                            val item = lazyPagingItems.peek(index) // peek 不会触发分页加载
-                            if (item is GalleryItem.HeaderItem) {
-                                GridItemSpan(maxLineSpan) // 标题横跨所有列 (占满整行)
-                            } else {
-                                GridItemSpan(1) // 照片只占 1 列
+                            when (items[index]) {
+                                is GalleryItem.HeaderItem -> GridItemSpan(maxLineSpan)
+                                is GalleryItem.PhotoItem -> GridItemSpan(1)
                             }
                         }
                     ) { index ->
-                        // 3. 根据类型渲染不同的 UI
-                        when (val item = lazyPagingItems[index]) {
+                        when (val item = items[index]) {
                             is GalleryItem.HeaderItem -> {
                                 Text(
                                     text = item.date,
@@ -105,32 +105,17 @@ fun GalleryScreen(
                                         .padding(horizontal = 12.dp, vertical = 16.dp)
                                 )
                             }
-
                             is GalleryItem.PhotoItem -> {
-                                // 1. 先计算真实的相片索引（减去前面的标题数量）
-                                val headerCount = (0 until index).count { lazyPagingItems.peek(it) is GalleryItem.HeaderItem }
-                                val realPhotoIndex = index - headerCount
-
-                                // 2. 完整渲染图片
                                 AsyncImage(
                                     model = item.photo.uri,
-                                    contentDescription = item.photo.name, // 👈 报错就是因为缺了这个！
-                                    contentScale = ContentScale.Crop,     // 👈 填满正方形格子
+                                    contentDescription = item.photo.name,
+                                    contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .aspectRatio(1f)
                                         .background(Color.LightGray)
                                         .clickable {
-                                            // 3. 点击时把正确的 index 传给大图页面
-                                            onPhotoClick(realPhotoIndex)
+                                            onPhotoClick(item.photo.id)
                                         }
-                                )
-                            }
-
-                            null -> {
-                                Box(
-                                    modifier = Modifier
-                                        .aspectRatio(1f)
-                                        .background(Color.LightGray)
                                 )
                             }
                         }
