@@ -1,4 +1,4 @@
-package com.example.pixelsea
+﻿package com.example.pixelsea
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

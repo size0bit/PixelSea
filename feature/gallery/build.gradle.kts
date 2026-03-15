@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("pixelsea.android.library")
     id("pixelsea.android.compose")
     id("pixelsea.android.hilt")
@@ -20,7 +20,7 @@ dependencies {
     // ViewModel 的 Compose 支持
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    
+
     // Paging 3 Compose 支持
     implementation(libs.androidx.paging.compose)
 }

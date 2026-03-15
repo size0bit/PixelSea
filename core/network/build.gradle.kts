@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     // 这就是我们刚才自己写的插件 ID！
     id("pixelsea.android.library")
 }

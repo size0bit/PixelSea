@@ -1,0 +1,39 @@
+﻿root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.kt]
+charset = utf-8-bom
+
+[*.kts]
+charset = utf-8-bom
+
+[*.md]
+charset = utf-8-bom
+
+[*.properties]
+charset = utf-8-bom
+
+[*.xml]
+charset = utf-8-bom
+
+[*.toml]
+charset = utf-8
+
+[*.tsv]
+charset = utf-8-bom
+
+[*.ps1]
+charset = utf-8-bom
+end_of_line = crlf
+
+[*.bat]
+end_of_line = crlf
+
+[gradlew]
+charset = utf-8
+end_of_line = lf

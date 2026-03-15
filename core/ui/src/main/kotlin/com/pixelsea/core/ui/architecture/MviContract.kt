@@ -1,4 +1,4 @@
-package com.pixelsea.core.ui.architecture
+﻿package com.pixelsea.core.ui.architecture
 
 /**
  * UI 状态：页面当前需要展示的数据集合

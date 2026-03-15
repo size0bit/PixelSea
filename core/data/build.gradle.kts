@@ -1,8 +1,7 @@
-plugins {
+﻿plugins {
     // 这就是我们刚才自己写的插件 ID！
     id("pixelsea.android.library")
     id("pixelsea.android.hilt") // 这一行就搞定了 Hilt 和 KSP 的所有配置！
-
 }
 
 android {
@@ -13,4 +12,5 @@ android {
 dependencies {
     // Paging 3 支持
     implementation(libs.androidx.paging.runtime)
+    testImplementation("junit:junit:4.13.2")
 }
