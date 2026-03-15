@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() {
                                         },
                                         sharedTransitionScope = this,
                                         animatedVisibilityScope = null,
-                                        sharedElementVisible = true,
                                     )
                                 }
                             }

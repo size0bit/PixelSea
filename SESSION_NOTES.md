@@ -26,6 +26,14 @@ Completed areas:
 - Gallery -> Viewer navigation was reworked from a page-replacement / hand-rolled overlay approach to a Compose shared-transition based approach.
 - Viewer now receives the initially clicked photo directly so cold-start open has a real first frame before the repository-backed photo list is ready.
 - Gallery no longer keeps the old "temporarily hide the clicked grid cell" behavior that could leave blank cells after repeated open/close cycles.
+- Viewer interaction pass was expanded substantially:
+  - large-image viewing now uses a real horizontally draggable pager rather than threshold-only page flips
+  - bottom filmstrip was added with a fixed 13-slot centered layout
+  - the center thumbnail is square while side thumbnails use a portrait ratio
+  - dragging the filmstrip can drive large-image page switching
+  - tapping non-control image area toggles the whole bottom chrome
+  - bottom chrome now combines the filmstrip and reserved future action area into one black container
+- Viewer state deadlock causing black-screen / no-back behavior during initialization was fixed.
 
 ## Current Product Behavior
 
@@ -41,6 +49,12 @@ Verified working behavior:
 - Quick-scroll date bubble is visible and currently renders normally.
 - Gallery -> Viewer open/close behavior is basically usable again after the shared-transition migration.
 - Repeated open/close no longer leaves the old obvious "blank grid cell until another click" bug from the temporary hidden-thumbnail logic.
+- Viewer now supports:
+  - full-screen adaptive large-image display with bottom chrome overlaying the image instead of shrinking the image area
+  - single-tap show/hide for the whole bottom chrome
+  - drag-to-scrub switching through the bottom filmstrip
+  - large-image horizontal paging with direct finger-follow behavior
+- Screenshot-like images can now occupy the full available screen height more naturally, while non-screen-shaped photos still fall back to black letterboxing as needed.
 
 Current quick-scroll behavior:
 
@@ -69,6 +83,14 @@ Key technical decisions already in the codebase:
   - shared-element visibility is caller-managed from `MainActivity`
   - `Viewer` gets both `initialPhotoId` and `initialPhotoUri`
   - `Viewer` can render the clicked photo immediately before the full photo list finishes loading
+- Current Viewer structure / behavior:
+  - large-image content is driven by `HorizontalPager`
+  - bottom chrome visibility is controlled by single-tap on non-control image area
+  - bottom chrome currently contains:
+    - the draggable filmstrip
+    - empty reserved action space below it for future controls
+  - filmstrip switching is intentionally state-coupled to the large-image pager
+  - back handling now always falls back safely to `initialPhotoId` if live pager/photo state is not ready
 - Image loading / transition stability details:
   - Gallery thumbnails use stable Coil memory cache keys: `thumb-{photoId}`
   - Viewer requests use `placeholderMemoryCacheKey("thumb-{photoId}")`
@@ -91,6 +113,11 @@ Known areas that may still need refinement:
   - cold-start first-open behavior improved, but transition feel can still be refined later
   - first-open smoothness and overall animation polish were intentionally deprioritized for now
 - Shared-transition API usage is somewhat version-sensitive. If builds fail in `feature:gallery` or `feature:viewer`, check Compose animation API signatures before changing app logic.
+- Viewer chrome / gesture notes:
+  - the current bottom filmstrip drag implementation is stable again after reverting from a coroutine-per-drag-step approach
+  - if drag behavior regresses into temporary black frames or "drag not moving" behavior, inspect filmstrip drag state first before touching pager code
+  - bottom chrome visibility animation was simplified to fade only; avoid reintroducing expand/shrink motion unless explicitly desired
+- The bottom reserved action area is only visual scaffolding for now; no actual action buttons have been added yet.
 
 ## Environment Notes
 
@@ -152,10 +179,9 @@ Most sensible next steps, in priority order:
 1. Leave Gallery -> Viewer transition logic alone unless a concrete regression appears; it is currently functional enough.
 2. If transition polish is revisited later, focus on first-open smoothness and animation feel, not basic correctness.
 3. Return to higher-value Viewer polish:
-   - double-tap zoom
-   - pinch zoom
-   - pan
-   - tap to show/hide UI
+   - convert reserved bottom action area into real controls
+   - decide whether large-image paging and filmstrip scrubbing need more hand-feel tuning or are ready to freeze
+   - revisit whether viewer chrome needs top metadata / action affordances
 4. Continue data-layer hardening:
    - add more filename timestamp parsing tests
    - add more grouping/sorting edge-case tests
@@ -182,5 +208,5 @@ Common compile checks:
 Use a prompt like this next time:
 
 ```text
-Continue PixelSea from SESSION_NOTES.md. The Gallery/Viewer core flow and current shared-transition implementation are already compiling and basically usable. Do not restart the transition rewrite unless there is a concrete regression. Prefer moving to the next product task, such as Viewer gestures or Gallery filters.
+Continue PixelSea from SESSION_NOTES.md. The Viewer now has a working full-screen pager, draggable bottom filmstrip, and hideable bottom chrome. Do not restart the Viewer interaction rewrite unless there is a concrete regression. Prefer either turning the reserved bottom chrome area into real controls or doing narrowly scoped hand-feel tuning.
 ```
